@@ -78,7 +78,7 @@ const LoginPage = () => {
                   autoFocus
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="admin"
+                  placeholder="Hãy nhập tài khoản"
                   required
                 />
               </div>
@@ -91,7 +91,7 @@ const LoginPage = () => {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="admin123"
+                  placeholder="Hãy nhập mật khẩu"
                   required
                 />
               </div>
