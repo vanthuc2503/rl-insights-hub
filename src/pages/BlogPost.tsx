@@ -3,6 +3,8 @@ import { ArrowLeft, Download, Calendar, User, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Header from "@/components/Header";
+import BlogCard from "@/components/BlogCard";
+import CommentSection from "@/components/CommentSection";
 import { useBlogStore } from "@/store/blogStore";
 import { useToast } from "@/hooks/use-toast";
 
@@ -10,7 +12,21 @@ const BlogPostPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const post = useBlogStore((state) => state.getPost(id || ""));
+  const allPosts = useBlogStore((state) => state.posts);
+  const post = allPosts.find((p) => p.id === id);
+
+  // Calculate related posts
+  const relatedPosts = post
+    ? allPosts
+      .filter((p) => p.id !== post.id)
+      .map((p) => ({
+        ...p,
+        commonTags: p.tags.filter((tag) => post.tags.includes(tag)).length,
+      }))
+      .filter((p) => p.commonTags > 0)
+      .sort((a, b) => b.commonTags - a.commonTags)
+      .slice(0, 3)
+    : [];
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("vi-VN", {
@@ -289,6 +305,25 @@ const BlogPostPage = () => {
             {renderContent(post.content)}
           </div>
         </article>
+
+        <hr className="my-12 border-border" />
+
+        {/* Related Posts */}
+        {relatedPosts.length > 0 && (
+          <section className="mb-12">
+            <h3 className="mb-6 text-2xl font-semibold">Bài viết liên quan</h3>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {relatedPosts.map((post, index) => (
+                <BlogCard key={post.id} post={post} index={index} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        <hr className="my-12 border-border" />
+
+        {/* Comments */}
+        <CommentSection postId={post.id} />
       </main>
     </div>
   );

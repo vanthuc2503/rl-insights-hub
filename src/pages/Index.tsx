@@ -1,10 +1,36 @@
+import { useState, useMemo } from 'react';
 import { Brain, BookOpen, Code, Sparkles } from 'lucide-react';
 import Header from '@/components/Header';
 import BlogCard from '@/components/BlogCard';
+import SearchBar from '@/components/SearchBar';
 import { useBlogStore } from '@/store/blogStore';
+import { Badge } from '@/components/ui/badge'; // Ensuring Badge is imported if available, or I might need to use basic span or check if Badge exists. checking ui folder... yes badge.tsx exists.
 
 const Index = () => {
   const posts = useBlogStore((state) => state.posts);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+
+  // Get all unique tags
+  const allTags = useMemo(() => {
+    const tags = new Set<string>();
+    posts.forEach(post => post.tags.forEach(tag => tags.add(tag)));
+    return Array.from(tags).sort();
+  }, [posts]);
+
+  // Filter posts
+  const filteredPosts = useMemo(() => {
+    return posts.filter((post) => {
+      const matchesSearch =
+        post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        post.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        post.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      const matchesTag = selectedTag ? post.tags.includes(selectedTag) : true;
+
+      return matchesSearch && matchesTag;
+    });
+  }, [posts, searchQuery, selectedTag]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -17,14 +43,14 @@ const Index = () => {
           <div className="mx-auto mb-6 flex h-16 w-16 animate-fade-in items-center justify-center rounded-2xl bg-primary shadow-ocean">
             <Brain className="h-8 w-8 text-primary-foreground" />
           </div>
-          
+
           <h1 className="mx-auto mb-4 max-w-3xl animate-fade-in text-4xl font-bold leading-tight text-foreground md:text-5xl" style={{ animationDelay: '100ms' }}>
             Khám phá thế giới{' '}
             <span className="text-primary">Reinforcement Learning</span>
           </h1>
-          
+
           <p className="mx-auto mb-8 max-w-2xl animate-fade-in text-lg text-muted-foreground" style={{ animationDelay: '200ms' }}>
-            Nơi chia sẻ kiến thức, thuật toán và ứng dụng của học tăng cường - 
+            Nơi chia sẻ kiến thức, thuật toán và ứng dụng của học tăng cường -
             từ những khái niệm cơ bản đến các kỹ thuật tiên tiến nhất.
           </p>
 
@@ -47,16 +73,48 @@ const Index = () => {
 
       {/* Blog Posts Grid */}
       <section className="container py-12">
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold text-foreground">Bài viết mới nhất</h2>
-          <p className="mt-1 text-muted-foreground">
-            Các bài viết về thuật toán, lý thuyết và ứng dụng RL
-          </p>
+        <div className="mb-8 space-y-6">
+          <div className="text-center md:text-left">
+            <h2 className="text-2xl font-semibold text-foreground">Bài viết mới nhất</h2>
+            <p className="mt-1 text-muted-foreground">
+              Các bài viết về thuật toán, lý thuyết và ứng dụng RL
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <SearchBar
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full md:max-w-sm"
+            />
+
+            <div className="flex flex-wrap gap-2">
+              <Badge
+                variant={selectedTag === null ? "default" : "outline"}
+                className="cursor-pointer"
+                onClick={() => setSelectedTag(null)}
+              >
+                Tất cả
+              </Badge>
+              {allTags.map((tag) => (
+                <Badge
+                  key={tag}
+                  variant={selectedTag === tag ? "default" : "outline"}
+                  className="cursor-pointer"
+                  onClick={() =>
+                    setSelectedTag(selectedTag === tag ? null : tag)
+                  }
+                >
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {posts.length > 0 ? (
+        {filteredPosts.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {posts.map((post, index) => (
+            {filteredPosts.map((post, index) => (
               <BlogCard key={post.id} post={post} index={index} />
             ))}
           </div>
